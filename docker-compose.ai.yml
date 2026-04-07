@@ -1,0 +1,114 @@
+# 建筑能源 ESG / FM 数字孪生 — AI 栈一键编排（Langchain-Chatchat + Xinference）
+# 用法：cp .env.example .env && ./scripts/one-click-deploy.sh
+# 或：docker compose -f docker-compose.ai.yml --env-file .env up -d
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: infra_mysql_ai
+    restart: unless-stopped
+    profiles:
+      - mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-myems}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_ai_data:/var/lib/mysql
+
+  xinference:
+    image: ${XINFERENCE_IMAGE:-xprobe/xinference:v0.12.3}
+    container_name: infra_xinference
+    restart: unless-stopped
+    command: xinference-local -H 0.0.0.0
+    ports:
+      - "${XINFERENCE_PORT:-9997}:9997"
+    volumes:
+      - xinference_data:/root/.xinference
+    environment:
+      - XINFERENCE_MODEL_SRC=${XINFERENCE_MODEL_SRC:-modelscope}
+    networks:
+      - ai-stack
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9997/v1/models')",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 60s
+    # 有 NVIDIA Container Toolkit 时取消注释以下段以使用 GPU 推理
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # 复用 Xinference 官方镜像跑 bootstrap 脚本，避免多拉一个 python 镜像（国内访问 Docker Hub 易超时）
+  model-bootstrap:
+    image: ${XINFERENCE_IMAGE:-xprobe/xinference:v0.12.3}
+    container_name: infra_model_bootstrap
+    restart: "no"
+    depends_on:
+      xinference:
+        condition: service_healthy
+    networks:
+      - ai-stack
+    environment:
+      XINFERENCE_ENDPOINT: http://xinference:9997
+      XF_LLM_MODEL_NAME: ${XF_LLM_MODEL_NAME:-qwen2-instruct}
+      XF_LLM_SIZE: ${XF_LLM_SIZE:-0.5}
+      XF_LLM_ENGINE: ${XF_LLM_ENGINE:-Transformers}
+      XF_LLM_QUANT: ${XF_LLM_QUANT:-none}
+      XF_EMBED_MODEL_NAME: ${XF_EMBED_MODEL_NAME:-bge-small-zh-v1.5}
+      XF_N_GPU: ${XF_N_GPU:-}
+    volumes:
+      - ./scripts/bootstrap_xinference_models.py:/bootstrap.py:ro
+    command: ["python", "/bootstrap.py"]
+
+  chatchat:
+    # 快速模式：直接使用预构建镜像（避免本地 build 20+ 分钟）
+    image: ${CHATCHAT_IMAGE:-chatimage/chatchat:0.3.1.3-93e2c87-20240829}
+    container_name: infra_chatchat
+    restart: unless-stopped
+    depends_on:
+      xinference:
+        condition: service_healthy
+      model-bootstrap:
+        condition: service_completed_successfully
+    ports:
+      - "${CHATCHAT_API_PORT:-7861}:7861"
+      - "${CHATCHAT_UI_PORT:-8501}:8501"
+    environment:
+      TZ: Asia/Shanghai
+      CHATCHAT_ROOT: /root/chatchat_data
+      XINFERENCE_OPENAI: http://xinference:9997/v1
+      DEFAULT_LLM_MODEL: ${XF_LLM_MODEL_NAME:-qwen2-instruct}
+      DEFAULT_EMBEDDING_MODEL: ${XF_EMBED_MODEL_NAME:-bge-small-zh-v1.5}
+      # 启动时根据 Xinference 已运行模型自动改 model_settings.yaml（设为 0 可关闭）
+      AUTO_SYNC_MODELS: ${AUTO_SYNC_MODELS:-1}
+    volumes:
+      - chatchat_data:/root/chatchat_data
+      - ./scripts/chatchat-entrypoint.sh:/scripts/chatchat-entrypoint.sh:ro
+      - ./scripts/sync_chatchat_models_from_xinference.py:/scripts/sync_chatchat_models_from_xinference.py:ro
+      - ./deploy/knowledge-base/building-esg:/opt/building-esg-kb:ro
+      - ./deploy/chatchat_config/prompt_settings.yaml:/root/chatchat_data/prompt_settings.yaml:ro
+    entrypoint: ["/bin/sh", "/scripts/chatchat-entrypoint.sh"]
+    networks:
+      - ai-stack
+
+networks:
+  ai-stack:
+    driver: bridge
+
+volumes:
+  xinference_data:
+  chatchat_data:
+  mysql_ai_data:

@@ -1,0 +1,2 @@
+{"messages":[{"role":"system","content":"你是司空大数据领域助手。回答需引用口径关键词，并在必要时给出边界条件。"},{"role":"user","content":"指标A的口径是什么？请用要点列出。"},{"role":"assistant","content":"1) 指标A口径：...\n2) 统计范围：...\n3) 排除规则：..."}]}
+{"messages":[{"role":"system","content":"你是司空大数据领域助手。"},{"role":"user","content":"“主题域”是什么？给一个业务例子。"},{"role":"assistant","content":"主题域是...\n业务例子：..."}]}

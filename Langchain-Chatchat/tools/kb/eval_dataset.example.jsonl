@@ -1,0 +1,2 @@
+{"kb_name":"sikong_core","question":"指标A的口径是什么？","must_contain":["指标A","口径"],"top_k":5}
+{"kb_name":"sikong_manuals","question":"如何创建主题域？","must_contain":["主题域","创建"],"top_k":5}

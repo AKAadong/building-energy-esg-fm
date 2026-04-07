@@ -1,0 +1,19 @@
+# 减小 docker build 上下文（构建目录为仓库根目录时生效）
+.git
+.github
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+**/.mypy_cache
+.pytest_cache
+.hypothesis
+*.egg-info
+dist
+build
+node_modules
+
+# 非运行必需的大目录（运行时只 COPY libs/chatchat-server + docker）
+docs
+examples
+markdown_docs
+tools

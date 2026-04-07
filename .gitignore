@@ -1,0 +1,38 @@
+# 本地密钥与私有配置（仓库里只保留 .env.example）
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+venv/
+.venv/
+
+# 编辑器与系统
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# 日志与临时
+*.log
+*.tmp
+/tmp/
+
+# Cursor / 本地
+.cursor/
+
+# Docker / 本地卷数据（若误拷进项目目录）
+**/chatchat_data/
+**/.xinference/
+
+# 本地备份的嵌套仓库，勿提交
+Langchain-Chatchat/.git.bak*/

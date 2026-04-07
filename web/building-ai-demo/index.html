@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>建筑能源 · FM · ESG — AI 场景演示</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222d;
+      --border: #2a3544;
+      --text: #e8edf4;
+      --muted: #8b9ab0;
+      --accent: #3ecf8e;
+      --accent-dim: #2a8f63;
+      --warn: #e8b86d;
+      --danger: #f07178;
+      --font-body: "DM Sans", system-ui, sans-serif;
+      --font-display: "Fraunces", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      background-image:
+        radial-gradient(ellipse 120% 80% at 100% 0%, rgba(62, 207, 142, 0.08), transparent 50%),
+        radial-gradient(ellipse 80% 60% at 0% 100%, rgba(232, 184, 109, 0.06), transparent 45%);
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    header {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 4vw, 2.1rem);
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .sub { color: var(--muted); font-size: 0.95rem; line-height: 1.55; max-width: 52rem; }
+    .grid-config {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin-bottom: 1.5rem;
+    }
+    label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.35rem; }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #121820;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    textarea { min-height: 140px; resize: vertical; line-height: 1.5; }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+    }
+    .tabs button {
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      padding: 0.5rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .tabs button:hover { color: var(--text); border-color: var(--accent-dim); }
+    .tabs button.active {
+      color: var(--bg);
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .panel h2 {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      margin: 0 0 0.75rem;
+      color: var(--warn);
+    }
+    .hint { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.75rem; line-height: 1.45; }
+    .row-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.65rem; margin-bottom: 0.75rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; margin-top: 1rem; }
+    button.primary {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: var(--accent);
+      color: #06281f;
+      font-weight: 700;
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+    }
+    .status { font-size: 0.8rem; color: var(--muted); }
+    .status.err { color: var(--danger); }
+    .status.ok { color: var(--accent); }
+    .out {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #121820;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      min-height: 120px;
+      max-height: 480px;
+      overflow: auto;
+    }
+    .scene { display: none; }
+    .scene.visible { display: block; }
+    code { font-size: 0.85em; background: #0c1016; padding: 0.1em 0.35em; border-radius: 4px; }
+    .rag-layout {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 900px) {
+      .rag-layout { grid-template-columns: minmax(240px, 320px) 1fr; align-items: start; }
+    }
+    .rag-side label { text-transform: none; letter-spacing: 0; font-size: 0.8rem; }
+    .rag-side .grid-config { grid-template-columns: 1fr; margin-bottom: 0; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    .score-val { font-variant-numeric: tabular-nums; color: var(--warn); font-weight: 600; }
+    .chat-log {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-height: 220px;
+      max-height: min(52vh, 520px);
+      overflow: auto;
+      padding: 0.75rem;
+      background: #121820;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .msg { max-width: 92%; padding: 0.65rem 0.85rem; border-radius: 10px; font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+    .msg.user { align-self: flex-end; background: #243040; border: 1px solid var(--border); }
+    .msg.assistant { align-self: flex-start; background: #0f1810; border: 1px solid var(--accent-dim); }
+    .msg .role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.35rem; }
+    .rag-input-row { display: flex; flex-direction: column; gap: 0.5rem; }
+    .rag-input-row textarea { min-height: 72px; }
+    .rag-input-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>建筑能源 · FM · ESG 场景演示</h1>
+      <p class="sub">
+        对接 Langchain-Chatchat 知识库对话 API（<code>/knowledge_base/local_kb/{知识库}/chat/completions</code>）。
+        <strong>RAG 对话</strong>页对齐 WebUI「知识库问答」：多轮历史、匹配条数、分数阈值、<code>prompt_name</code>；其余页为单轮场景模板。
+      </p>
+    </header>
+
+    <div class="panel">
+      <div class="grid-config">
+        <div>
+          <label>API 根地址（不要填 /docs，填 API 根路径）</label>
+          <input type="text" id="apiRoot" placeholder="本机演示：http://127.0.0.1:8765/api 或 http://127.0.0.1:7861" autocomplete="off" />
+        </div>
+        <div>
+          <label>知识库名称</label>
+          <select id="kbName"></select>
+        </div>
+        <div>
+          <label>模型名</label>
+          <input type="text" id="modelName" placeholder="如 qwen2-instruct" />
+        </div>
+        <div>
+          <label>top_k</label>
+          <input type="number" id="topK" value="5" min="1" max="50" />
+        </div>
+        <div>
+          <label>score_threshold（0~1，与 LangChain 检索一致；1.0 最宽松）</label>
+          <input type="number" id="scoreTh" value="1.0" min="0" max="1" step="0.05" />
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="ghost" id="btnUseProxy">使用本页代理 /api</button>
+        <button type="button" class="ghost" id="btnRefreshKb">刷新知识库列表</button>
+        <button type="button" class="ghost" id="btnRefreshModels">从 /v1/models 填充模型</button>
+        <span class="status" id="connStatus"></span>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button type="button" class="active" data-scene="rag">RAG 对话</button>
+      <button type="button" data-scene="ops">智能运营优化</button>
+      <button type="button" data-scene="fm">FM 设施管理</button>
+      <button type="button" data-scene="esg">ESG 评价</button>
+      <button type="button" data-scene="qa">系统问答</button>
+    </div>
+
+    <section id="scene-rag" class="scene panel visible">
+      <h2>RAG 对话（WebUI 同款）</h2>
+      <p class="hint">对话模式：<strong>知识库问答</strong>。使用上方「知识库名称」与「模型名」；下方仅影响本页多轮会话与检索参数。</p>
+      <div class="rag-layout">
+        <div class="rag-side panel" style="margin:0;padding:1rem">
+          <div class="grid-config">
+            <div>
+              <label>历史对话轮数</label>
+              <input type="number" id="ragHistoryRounds" value="3" min="0" max="20" title="保留最近 N 轮（每轮 = 用户 + 助手各一条）作为上下文" />
+            </div>
+            <div>
+              <label>匹配知识条数（top_k）</label>
+              <input type="number" id="ragTopK" value="3" min="1" max="50" />
+            </div>
+            <div>
+              <label>知识匹配分数阈值（0~1） <span class="score-val" id="ragScoreLabel">1.00</span></label>
+              <input type="range" id="ragScoreRange" min="0" max="1" step="0.05" value="1" />
+            </div>
+            <div>
+              <label>prompt_name</label>
+              <select id="ragPromptName">
+                <option value="default">default</option>
+                <option value="building_fm_esg">building_fm_esg</option>
+                <option value="smart_ops">smart_ops</option>
+                <option value="fm_maintenance">fm_maintenance</option>
+                <option value="esg_compliance">esg_compliance</option>
+                <option value="system_qa">system_qa</option>
+              </select>
+            </div>
+            <div>
+              <label>temperature</label>
+              <input type="number" id="ragTemp" value="" min="0" max="2" step="0.1" placeholder="默认用服务端配置" />
+            </div>
+          </div>
+          <div class="actions" style="margin-top:0.5rem">
+            <button type="button" class="ghost" id="btnRagClear">清空对话</button>
+          </div>
+        </div>
+        <div>
+          <label>对话</label>
+          <div id="ragChatLog" class="chat-log" aria-live="polite"></div>
+          <div class="rag-input-row" style="margin-top:0.75rem">
+            <textarea id="ragInput" placeholder="请输入对话内容，换行请使用 Shift+Enter。"></textarea>
+            <div class="rag-input-actions">
+              <button type="button" class="primary" id="btnRagSend">发送</button>
+              <span class="status" id="statusRag"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="scene-ops" class="scene panel">
+      <h2>智能运营优化</h2>
+      <p class="hint">视觉无人态、能耗与 FM 知识结合，生成可落地节电/运行建议（模板 <code>smart_ops</code>，亦可选 <code>building_fm_esg</code>）。</p>
+      <div class="row-mini">
+        <div><label>空间 / 房间</label><input type="text" id="opsRoom" placeholder="如 会议室 A-301" /></div>
+        <div><label>视觉识别（无人等）</label><input type="text" id="opsVision" placeholder="如 连续 30 分钟无人" /></div>
+        <div><label>空调 / 环境状态</label><input type="text" id="opsHvac" placeholder="如 开启，24℃" /></div>
+        <div><label>能耗参考（可选）</label><input type="text" id="opsKwh" placeholder="如 当日 12 kWh" /></div>
+      </div>
+      <label>补充说明 / 问题</label>
+      <textarea id="opsExtra" placeholder="例如：请估算关闭空调后当日节电区间，并给出优先级。"></textarea>
+      <div class="grid-config" style="margin-top:0.75rem">
+        <div>
+          <label>prompt_name</label>
+          <select id="promptOps">
+            <option value="smart_ops">smart_ops（推荐）</option>
+            <option value="building_fm_esg">building_fm_esg（综合 FM/ESG）</option>
+            <option value="default">default</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="primary" data-send="ops">发送到知识库</button>
+        <span class="status" id="statusOps"></span>
+      </div>
+      <div class="out" id="outOps" aria-live="polite"></div>
+    </section>
+
+    <section id="scene-fm" class="scene panel">
+      <h2>FM 设施管理</h2>
+      <p class="hint">设备异常、告警与运维知识库 → 诊断步骤与注意事项（模板 <code>fm_maintenance</code>）。</p>
+      <label>故障 / 告警描述</label>
+      <textarea id="fmText" placeholder="例：新风机组 FA-03 报送风机变频器通讯故障，现场有焦糊味，发生于今日 09:15。"></textarea>
+      <div class="grid-config" style="margin-top:0.75rem">
+        <div>
+          <label>prompt_name</label>
+          <select id="promptFm">
+            <option value="fm_maintenance">fm_maintenance</option>
+            <option value="default">default</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="primary" data-send="fm">发送到知识库</button>
+        <span class="status" id="statusFm"></span>
+      </div>
+      <div class="out" id="outFm" aria-live="polite"></div>
+    </section>
+
+    <section id="scene-esg" class="scene panel">
+      <h2>ESG 评价</h2>
+      <p class="hint">ESG 指标、披露与合规知识 → 提升建议与条款解读（模板 <code>esg_compliance</code>）。</p>
+      <label>问题</label>
+      <textarea id="esgText" placeholder="例：本项目若要提升能源分项披露，GRI 302 下建议收集哪些数据？"></textarea>
+      <div class="grid-config" style="margin-top:0.75rem">
+        <div>
+          <label>prompt_name</label>
+          <select id="promptEsg">
+            <option value="esg_compliance">esg_compliance</option>
+            <option value="building_fm_esg">building_fm_esg</option>
+            <option value="default">default</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="primary" data-send="esg">发送到知识库</button>
+        <span class="status" id="statusEsg"></span>
+      </div>
+      <div class="out" id="outEsg" aria-live="polite"></div>
+    </section>
+
+    <section id="scene-qa" class="scene panel">
+      <h2>系统问答</h2>
+      <p class="hint">面向知识库的通用专业问答（模板 <code>system_qa</code>）。</p>
+      <label>问题</label>
+      <textarea id="qaText" placeholder="例：怎么提升建筑 ESG 评分？或 XX 设备故障现场应急怎么处理？"></textarea>
+      <div class="grid-config" style="margin-top:0.75rem">
+        <div>
+          <label>prompt_name</label>
+          <select id="promptQa">
+            <option value="system_qa">system_qa</option>
+            <option value="default">default</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="primary" data-send="qa">发送到知识库</button>
+        <span class="status" id="statusQa"></span>
+      </div>
+      <div class="out" id="outQa" aria-live="polite"></div>
+    </section>
+
+    <p class="sub" style="margin-top:2rem;font-size:0.85rem;">
+      若浏览器直连 Chatchat 报 CORS：请在 Chatchat <code>basic_settings.yaml</code> 中设置 <code>OPEN_CROSS_DOMAIN: true</code> 后重启；
+      或使用 <code>python3 scripts/serve-building-ai-demo.py</code> 通过本页同源 <code>/api</code> 代理访问。
+    </p>
+  </div>
+
+  <script>
+(function () {
+  const port = location.port;
+  const defaultApi =
+    port === "8765" || location.pathname.includes("building-ai-demo")
+      ? location.origin + "/api"
+      : "http://127.0.0.1:7861";
+  const apiInput = document.getElementById("apiRoot");
+
+  /** 去掉 /docs、/openapi.json 等误填，得到可调用 JSON 的根 URL */
+  function normalizeApiBase(raw) {
+    let s = (raw || "").trim().replace(/\/+$/, "");
+    if (!s) return s;
+    const strip = [
+      /\/docs\/?$/i,
+      /\/openapi\.json\/?$/i,
+      /\/swagger\/?.*$/i,
+      /\/redoc\/?$/i,
+    ];
+    strip.forEach((re) => {
+      s = s.replace(re, "");
+    });
+    return s.replace(/\/+$/, "");
+  }
+
+  function apiBase() {
+    return normalizeApiBase(apiInput.value);
+  }
+
+  function persistApi() {
+    const n = normalizeApiBase(apiInput.value);
+    if (n !== apiInput.value) apiInput.value = n;
+    localStorage.setItem("chatchatApiRoot", n);
+  }
+  apiInput.addEventListener("change", persistApi);
+  apiInput.addEventListener("blur", persistApi);
+
+  (function initApiField() {
+    const stored = localStorage.getItem("chatchatApiRoot");
+    const initial = normalizeApiBase(stored) || defaultApi;
+    apiInput.value = initial;
+    if (stored && normalizeApiBase(stored) !== stored) {
+      localStorage.setItem("chatchatApiRoot", initial);
+    }
+  })();
+
+  document.getElementById("btnUseProxy").addEventListener("click", () => {
+    apiInput.value = location.origin + "/api";
+    persistApi();
+    loadKbs().catch((e) => {
+      connStatus.textContent = e.message;
+      connStatus.className = "status err";
+    });
+  });
+
+  async function jfetch(path, opt) {
+    const base = apiBase();
+    if (!base) throw new Error("请先填写 API 根地址");
+    const url = base + path;
+    let r;
+    try {
+      r = await fetch(url, {
+        ...opt,
+        headers: { "Content-Type": "application/json", ...(opt && opt.headers) },
+      });
+    } catch (e) {
+      const msg =
+        (e && e.message) ||
+        (typeof e === "string" ? e : "Failed to fetch");
+      throw new Error(
+        msg +
+          "。请检查：① API 是否为根地址（勿填 /docs）；② 端口是否与 Chatchat 一致（常见 7861）；③ 用「使用本页代理 /api」时需先运行 serve-building-ai-demo.py"
+      );
+    }
+    const t = await r.text();
+    let data;
+    try {
+      data = JSON.parse(t);
+    } catch {
+      data = { raw: t };
+    }
+    if (!r.ok) throw new Error(data.message || data.detail || t || r.status);
+    return data;
+  }
+
+  const connStatus = document.getElementById("connStatus");
+
+  async function loadKbs() {
+    connStatus.textContent = "加载知识库…";
+    connStatus.className = "status";
+    const data = await jfetch("/knowledge_base/list_knowledge_bases");
+    const sel = document.getElementById("kbName");
+    sel.innerHTML = "";
+    const list = (data.data || []).map((x) => x.kb_name || x.name || x).filter(Boolean);
+    if (!list.length) {
+      const o = document.createElement("option");
+      o.value = "";
+      o.textContent = "（无）请先在 WebUI 创建知识库";
+      sel.appendChild(o);
+      connStatus.textContent = "已连接，但暂无知识库";
+      connStatus.className = "status ok";
+      return;
+    }
+    list.forEach((name) => {
+      const o = document.createElement("option");
+      o.value = name;
+      o.textContent = name;
+      sel.appendChild(o);
+    });
+    connStatus.textContent = "知识库列表已更新";
+    connStatus.className = "status ok";
+  }
+
+  async function loadModels() {
+    connStatus.textContent = "加载模型列表…";
+    try {
+      const data = await jfetch("/v1/models");
+      const first = (data.data || [])[0];
+      const id = first && (first.id || first.model);
+      if (id) document.getElementById("modelName").value = id;
+      connStatus.textContent = "已填充模型名（可取列表第一个，请按需修改）";
+      connStatus.className = "status ok";
+    } catch (e) {
+      connStatus.textContent = "模型列表失败: " + e.message;
+      connStatus.className = "status err";
+    }
+  }
+
+  document.getElementById("btnRefreshKb").onclick = () => loadKbs().catch((e) => {
+    connStatus.textContent = e.message;
+    connStatus.className = "status err";
+  });
+  document.getElementById("btnRefreshModels").onclick = () => loadModels();
+
+  function buildOpsQuestion() {
+    const parts = [];
+    const room = document.getElementById("opsRoom").value.trim();
+    const vision = document.getElementById("opsVision").value.trim();
+    const hvac = document.getElementById("opsHvac").value.trim();
+    const kwh = document.getElementById("opsKwh").value.trim();
+    const extra = document.getElementById("opsExtra").value.trim();
+    if (room) parts.push("空间/房间：" + room);
+    if (vision) parts.push("视觉识别：" + vision);
+    if (hvac) parts.push("空调与环境：" + hvac);
+    if (kwh) parts.push("能耗参考：" + kwh);
+    if (extra) parts.push(extra);
+    return parts.join("\n") || "请根据知识库给出本楼宇当前可执行的节能与运行优化建议。";
+  }
+
+  async function sendKb(promptName, question, statusEl, outEl) {
+    const kb = document.getElementById("kbName").value.trim();
+    if (!kb) throw new Error("请选择知识库");
+    const model = document.getElementById("modelName").value.trim();
+    if (!model) throw new Error("请填写模型名");
+    const top_k = Number(document.getElementById("topK").value) || 5;
+    const score_threshold = Number(document.getElementById("scoreTh").value);
+    statusEl.textContent = "请求中…";
+    statusEl.className = "status";
+    outEl.textContent = "";
+    const path =
+      "/knowledge_base/local_kb/" + encodeURIComponent(kb) + "/chat/completions";
+    const body = {
+      model,
+      stream: false,
+      messages: [{ role: "user", content: question }],
+      prompt_name: promptName,
+      top_k,
+      score_threshold,
+    };
+    const data = await jfetch(path, { method: "POST", body: JSON.stringify(body) });
+    const content =
+      data.choices &&
+      data.choices[0] &&
+      data.choices[0].message &&
+      data.choices[0].message.content;
+    outEl.textContent = content != null ? content : JSON.stringify(data, null, 2);
+    statusEl.textContent = "完成";
+    statusEl.className = "status ok";
+  }
+
+  document.querySelectorAll("[data-send]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-send");
+      const map = {
+        ops: {
+          prompt: () => document.getElementById("promptOps").value,
+          q: buildOpsQuestion,
+          st: document.getElementById("statusOps"),
+          out: document.getElementById("outOps"),
+        },
+        fm: {
+          prompt: () => document.getElementById("promptFm").value,
+          q: () => document.getElementById("fmText").value.trim() || "请根据知识库给出该设备异常的排查建议。",
+          st: document.getElementById("statusFm"),
+          out: document.getElementById("outFm"),
+        },
+        esg: {
+          prompt: () => document.getElementById("promptEsg").value,
+          q: () => document.getElementById("esgText").value.trim() || "请说明本建筑 ESG 能源相关可改进点。",
+          st: document.getElementById("statusEsg"),
+          out: document.getElementById("outEsg"),
+        },
+        qa: {
+          prompt: () => document.getElementById("promptQa").value,
+          q: () => document.getElementById("qaText").value.trim() || "你好，请介绍你能提供的建筑能源与 FM 帮助。",
+          st: document.getElementById("statusQa"),
+          out: document.getElementById("outQa"),
+        },
+      };
+      const c = map[id];
+      sendKb(c.prompt(), c.q(), c.st, c.out).catch((e) => {
+        c.st.textContent = e.message || String(e);
+        c.st.className = "status err";
+        c.out.textContent = "";
+      });
+    });
+  });
+
+  document.querySelectorAll(".tabs button").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tabs button").forEach((b) => b.classList.remove("active"));
+      tab.classList.add("active");
+      const scene = tab.getAttribute("data-scene");
+      document.querySelectorAll(".scene").forEach((s) => s.classList.remove("visible"));
+      document.getElementById("scene-" + scene).classList.add("visible");
+    });
+  });
+
+  const ragMessages = [];
+  const ragChatLog = document.getElementById("ragChatLog");
+  const ragInput = document.getElementById("ragInput");
+  const ragScoreRange = document.getElementById("ragScoreRange");
+  const ragScoreLabel = document.getElementById("ragScoreLabel");
+  function syncRagScoreLabel() {
+    ragScoreLabel.textContent = Number(ragScoreRange.value).toFixed(2);
+  }
+  ragScoreRange.addEventListener("input", syncRagScoreLabel);
+  syncRagScoreLabel();
+
+  function renderRagChat() {
+    ragChatLog.innerHTML = "";
+    ragMessages.forEach((m) => {
+      const div = document.createElement("div");
+      div.className = "msg " + (m.role === "user" ? "user" : "assistant");
+      const role = document.createElement("div");
+      role.className = "role";
+      role.textContent = m.role === "user" ? "用户" : "助手";
+      const text = document.createElement("div");
+      text.textContent = m.content;
+      div.appendChild(role);
+      div.appendChild(text);
+      ragChatLog.appendChild(div);
+    });
+    ragChatLog.scrollTop = ragChatLog.scrollHeight;
+  }
+
+  function sliceHistoryForRounds(messages, rounds) {
+    const r = Math.max(0, Math.min(20, Number(rounds) || 0));
+    const maxMsgs = r * 2;
+    if (messages.length <= maxMsgs) return messages.slice();
+    return messages.slice(-maxMsgs);
+  }
+
+  async function sendRagChat() {
+    const text = ragInput.value.trim();
+    if (!text) return;
+    const kb = document.getElementById("kbName").value.trim();
+    if (!kb) throw new Error("请选择知识库");
+    const model = document.getElementById("modelName").value.trim();
+    if (!model) throw new Error("请填写模型名");
+    const rounds = document.getElementById("ragHistoryRounds").value;
+    const prior = sliceHistoryForRounds(ragMessages, rounds);
+    const messages = prior.concat([{ role: "user", content: text }]);
+    const top_k = Number(document.getElementById("ragTopK").value) || 3;
+    const score_threshold = Number(ragScoreRange.value);
+    const prompt_name = document.getElementById("ragPromptName").value;
+    const tempEl = document.getElementById("ragTemp").value.trim();
+    const statusRag = document.getElementById("statusRag");
+    statusRag.textContent = "请求中…";
+    statusRag.className = "status";
+    const path =
+      "/knowledge_base/local_kb/" + encodeURIComponent(kb) + "/chat/completions";
+    const body = {
+      model,
+      stream: false,
+      messages,
+      prompt_name,
+      top_k,
+      score_threshold,
+    };
+    if (tempEl !== "") body.temperature = Number(tempEl);
+    const data = await jfetch(path, { method: "POST", body: JSON.stringify(body) });
+    const content =
+      data.choices &&
+      data.choices[0] &&
+      data.choices[0].message &&
+      data.choices[0].message.content;
+    const reply = content != null ? String(content) : JSON.stringify(data, null, 2);
+    ragMessages.push({ role: "user", content: text });
+    ragMessages.push({ role: "assistant", content: reply });
+    ragInput.value = "";
+    renderRagChat();
+    statusRag.textContent = "完成";
+    statusRag.className = "status ok";
+  }
+
+  document.getElementById("btnRagSend").addEventListener("click", () => {
+    sendRagChat().catch((e) => {
+      const statusRag = document.getElementById("statusRag");
+      statusRag.textContent = e.message || String(e);
+      statusRag.className = "status err";
+    });
+  });
+  document.getElementById("btnRagClear").addEventListener("click", () => {
+    ragMessages.length = 0;
+    renderRagChat();
+    document.getElementById("statusRag").textContent = "已清空";
+    document.getElementById("statusRag").className = "status ok";
+  });
+  ragInput.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter" && !ev.shiftKey) {
+      ev.preventDefault();
+      document.getElementById("btnRagSend").click();
+    }
+  });
+
+  loadKbs().catch((e) => {
+    connStatus.textContent = "无法连接 API: " + e.message;
+    connStatus.className = "status err";
+  });
+  loadModels().catch(() => {});
+})();
+  </script>
+</body>
+</html>
