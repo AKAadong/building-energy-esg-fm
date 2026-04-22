@@ -1,0 +1,1 @@
+Place 72h soak monitoring screenshots in this folder, using the filenames referenced in SYSTEM_TEST_REPORT.md section 6.4 (e.g. soak-72h-cpu.png).
