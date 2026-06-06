@@ -1,0 +1,26 @@
+<view class="page">
+  <view class="block">
+    <text class="title">后端 API 地址</text>
+    <text class="hint warn">开发者工具模拟器请用 127.0.0.1；手机真机预览才用局域网 IP（如 10.200.83.168）。</text>
+    <input class="input" value="{{apiBase}}" placeholder="http://127.0.0.1:8765" bindinput="onInput" />
+    <view class="btn-row">
+      <button size="mini" class="btn-ghost primary-mini" bindtap="fillLocalDev">本机调试</button>
+      <button size="mini" class="btn-ghost" bindtap="fillPhonePreview">真机 IP</button>
+      <button size="mini" class="btn-ghost" loading="{{testing}}" bindtap="testConnection">测试连接</button>
+    </view>
+    <button class="save-btn btn-primary" bindtap="save">保存</button>
+    <text wx:if="{{testMsg}}" class="test-msg {{testOk ? 'ok' : 'err'}}">{{testMsg}}</text>
+  </view>
+
+  <view class="block">
+    <text class="title">启动后端（电脑端）</text>
+    <text class="code">cd building_energy_system\backend</text>
+    <text class="code">python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8765</text>
+    <text class="hint muted">本机调试与真机预览都需要后端在运行；真机还需防火墙放行 8765。</text>
+  </view>
+
+  <view class="block">
+    <text class="title">开发者工具</text>
+    <text class="hint muted">详情 → 本地设置 → 勾选「不校验合法域名、web-view、TLS 版本以及 HTTPS 证书」。</text>
+  </view>
+</view>

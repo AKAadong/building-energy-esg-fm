@@ -1,0 +1,108 @@
+<view class="page">
+  <view class="top-bar">
+    <text class="top-title">孪生与视觉 · 移动分析</text>
+    <view class="top-actions">
+      <text class="api-dot {{apiConfigured ? 'ok' : 'warn'}}">{{apiConfigured ? 'API 已连' : '未配置'}}</text>
+      <text class="link" bindtap="goSettings">设置</text>
+    </view>
+    <text class="top-meta">YOLO-World · 预设无 · imgsz=1280 · 不关联建筑</text>
+  </view>
+
+  <view class="block">
+    <view class="block-head">
+      <text class="title">上传空间图片</text>
+      <text class="block-tag">识别预设：无</text>
+    </view>
+    <view class="capture-actions">
+      <button class="capture-btn primary" bindtap="chooseCamera">拍照</button>
+      <button class="capture-btn" bindtap="chooseAlbum">相册</button>
+    </view>
+    <image wx:if="{{imagePath}}" class="preview-img" src="{{imagePath}}" mode="widthFix" />
+    <view wx:else class="preview-placeholder">
+      <text class="muted">与桌面端「孪生与视觉」一致：上传后生成能耗预测、电器完好度与建模后运营建议。</text>
+    </view>
+    <button class="run-btn btn-primary" disabled="{{!imagePath || analyzing}}" loading="{{analyzing}}" bindtap="runAnalyze">
+      {{ analyzing ? '分析中…' : '上传并分析' }}
+    </button>
+    <text wx:if="{{errorMsg}}" class="error-line">{{errorMsg}}</text>
+    <text wx:if="{{hasResult}}" class="muted-line">识别目标数 {{modelBoxCount}}</text>
+  </view>
+
+  <view wx:if="{{hasResult && forecast}}" class="block">
+    <view class="block-head">
+      <text class="title">能耗预测</text>
+      <text class="block-tag">{{forecast.model}}</text>
+    </view>
+    <text wx:if="{{noBuildingNote}}" class="info-line">{{noBuildingNote}}</text>
+    <view wx:if="{{forecast.empty}}" class="muted-line">暂无预测数据，请确认后端能耗 CSV 已加载。</view>
+    <block wx:else>
+      <text wx:if="{{forecast.headLine}}" class="head-line">{{forecast.headLine}}</text>
+      <view class="pill-row">
+        <text class="pill accent">峰值 {{forecast.peak}} kWh/h</text>
+        <text class="pill">均值 {{forecast.mean}} kWh/h</text>
+        <text class="pill">最低 {{forecast.min}} kWh/h</text>
+        <text class="pill">峰谷差 {{forecast.delta}} kWh/h</text>
+      </view>
+      <view class="volume-block" wx:if="{{metrics}}">
+        <text class="sub-title">场景示意负荷（与桌面端一致）</text>
+        <text class="volume-line">体量示意 {{metrics.twinVolumeHeuristicKwh}} kWh/h · 电器 {{metrics.twinApplianceExtraKwh}} kWh/h · 合计 {{metrics.twinDemoLoadTotalKwh}} kWh/h</text>
+      </view>
+      <text class="sub-title">预测曲线（{{forecast.horizon}}h）</text>
+      <scroll-view scroll-y class="forecast-scroll">
+        <view wx:for="{{forecast.rows}}" wx:key="time" class="forecast-row">
+          <text class="forecast-time">{{item.time}}</text>
+          <view class="forecast-bar-wrap"><view class="forecast-bar" style="width:{{item.pct}}%"></view></view>
+          <text class="forecast-val">{{item.value}}</text>
+        </view>
+      </scroll-view>
+    </block>
+  </view>
+
+  <view wx:if="{{hasResult && asset}}" class="block">
+    <view class="block-head">
+      <text class="title">电器完好度与更换建议</text>
+      <text class="block-tag">{{asset.available ? 'YOLO-World' : '未就绪'}}</text>
+    </view>
+    <view wx:if="{{!asset.available}}" class="muted-line">{{asset.hint || '暂无电器健康评估'}}</view>
+    <text wx:if="{{asset.anomalyOverview}}" class="info-line">{{asset.anomalyOverview}}</text>
+    <view wx:if="{{asset.summary}}" class="summary-row">
+      <text class="summary-chip">检出电器 {{asset.summary.electric_appliance_detections || 0}}</text>
+      <text class="summary-chip warn">需关注 {{asset.summary.needs_attention || 0}}</text>
+    </view>
+    <view wx:if="{{asset.items.length}}">
+      <view wx:for="{{asset.items}}" wx:key="index" class="asset-card">
+        <view class="asset-head">
+          <text class="asset-cat">{{item.category_zh}}</text>
+          <text class="asset-label">{{item.label}}</text>
+          <text class="score {{item.scoreClass}}">{{item.integrity_score}}</text>
+        </view>
+        <view class="asset-grid">
+          <text>破损度 {{item.damage_display}}</text>
+          <text>估剩余寿命 {{item.estimated_remaining_life_years}} 年</text>
+        </view>
+        <text class="asset-line">更换建议：{{item.replace_recommendation}}</text>
+        <text class="asset-line muted">用电风险：{{item.electricity_risk_note}}</text>
+      </view>
+    </view>
+    <view wx:elif="{{asset.available}}" class="muted-line">未匹配到常见电器类标签；后端内置类名已含 refrigerator，请确保拍摄清晰完整后重试。</view>
+  </view>
+
+  <view wx:if="{{hasResult}}" class="block">
+    <view class="block-head">
+      <text class="title">建模后运营建议</text>
+      <text class="block-tag">场景+视觉</text>
+    </view>
+    <text wx:if="{{noBuildingNote}}" class="info-line">{{noBuildingNote}}</text>
+    <view wx:if="{{opsRows.length}}" class="ops-list">
+      <view wx:for="{{opsRows}}" wx:key="title" class="ops-item">
+        <view class="ops-head">
+          <text class="ops-tag ops-tag-{{item.sourceTagType}}">{{item.sourceLabel}}</text>
+          <text class="ops-priority">[{{item.priorityLabel}}]</text>
+        </view>
+        <text class="ops-title">{{item.title}}</text>
+        <text class="ops-effect">{{item.expectedText}}</text>
+      </view>
+    </view>
+    <view wx:else class="muted-line">暂无建议：请完成上传识别，或检查能耗样本是否已加载。</view>
+  </view>
+</view>

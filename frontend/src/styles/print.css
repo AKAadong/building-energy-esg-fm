@@ -1,0 +1,38 @@
+/* 报表/答辩打印：隐藏导航与操作，突出正文 */
+@media print {
+  .ems-aside,
+  .ems-header,
+  .collapse-btn,
+  .ems-aside-foot,
+  .admin-bar,
+  .hide-print {
+    display: none !important;
+  }
+
+  .ems-shell {
+    display: block !important;
+  }
+
+  .ems-right {
+    width: 100% !important;
+  }
+
+  .ems-main {
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .myems-page,
+  .page-qa,
+  .dash {
+    max-width: none !important;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+}
